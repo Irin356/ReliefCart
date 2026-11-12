@@ -60,7 +60,7 @@ const columnTypes: ColTypeDefs<Row> = {
 };
 
 const defaultColDef: ColDef<Row> = { filter: true };
-const autoSizeStrategy = { type: 'fitCellContents' } as const;
+
 
 export function DataGrid({ rows, columns }: { rows: Row[]; columns: ColDef<Row>[] }) {
   const [search, setSearch] = useState('');
@@ -77,16 +77,15 @@ export function DataGrid({ rows, columns }: { rows: Row[]; columns: ColDef<Row>[
       />
       <div className="min-h-0 flex-1">
         <AgGridProvider modules={modules}>
-          <AgGridReact
-            theme={theme}
-            rowData={rows}
-            columnDefs={columns}
-            columnTypes={columnTypes}
-            defaultColDef={defaultColDef}
-            quickFilterText={search}
-            autoSizeStrategy={autoSizeStrategy}
-            enableCellTextSelection
-          />
+        <AgGridReact
+          theme={theme}
+          rowData={rows}
+          columnDefs={columns}
+          columnTypes={columnTypes}
+          defaultColDef={defaultColDef}
+          quickFilterText={search}
+          enableCellTextSelection
+        />
         </AgGridProvider>
       </div>
     </div>
