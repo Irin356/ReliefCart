@@ -4,6 +4,8 @@
 
 ReliefCart AI helps relief coordinators turn an emergency brief, family count, and available budget into a practical procurement plan. It combines AI-generated planning suggestions with product search results, budget-aware allocation, PayPal Sandbox contributions, a Supabase donation ledger, and AG Grid analytics.
 
+> **Live application:** [Open ReliefCart AI](https://reliefcart.onrender.com/)
+
 > **Demo video:** [Watch ReliefCart AI on YouTube](https://youtu.be/JvuT7RIXpU8)
 
 ## The problem
@@ -189,6 +191,7 @@ Use Sandbox credentials only for this demonstration. Never put real PayPal crede
 
 ## Demo
 
+**Live application:** [https://reliefcart.onrender.com/](https://reliefcart.onrender.com/)
 [ReliefCart AI — YouTube demo](https://youtu.be/JvuT7RIXpU8)
 
 ## License
