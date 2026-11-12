@@ -1,91 +1,196 @@
-> [!TIP]
-> **PayPal AI Hackathon**
-> 
-> Win part of $69,750 in total prizes
-> 
-> Build What's Next with PayPal and AI is a global online hackathon inviting developers, designers, founders, students, and builders to create something new using PayPal and AI.
-> 
-> There are no prescribed problem statements and no set of tracks. Build an agent, an app, an automation, a new payment experience, a business tool, a social product, or something we haven't thought of yet.
-> 
-> https://paypalaihackathon.devpost.com
+# ReliefCart AI
 
-# PayPal SDK data pages
+**AI-powered emergency relief procurement planning and contribution tracking.**
 
-A Next.js app that reads PayPal sandbox data over the [PayPal REST API](https://developer.paypal.com/api/rest/) and shows it two ways:
+ReliefCart AI helps relief coordinators turn an emergency brief, family count, and available budget into a practical procurement plan. It combines AI-generated planning suggestions with product search results, budget-aware allocation, PayPal Sandbox contributions, a Supabase donation ledger, and AG Grid analytics.
 
-- **Endpoint pages**: one [AG Grid](https://www.ag-grid.com/react-data-grid/) per PayPal endpoint the demo calls, showing what each returns.
-- **Dashboard** (`/dashboard`): an [AG Studio](https://www.ag-grid.com/studio/) report over all of that data, joined together, which you can edit and save in the browser.
+> **Demo video:** [Watch ReliefCart AI on YouTube](https://youtu.be/JvuT7RIXpU8)
+
+## The problem
+
+During an emergency, relief teams must decide what supplies to procure, compare available products, and stretch limited funds across affected families. These decisions can be difficult when needs are urgent and product information is spread across different sources.
+
+## The solution
+
+ReliefCart AI brings planning, product discovery, budget allocation, and contribution tracking into one application. A coordinator describes the emergency, enters the number of families and a budget, and generates a procurement plan. The application searches for matching product offers and uses the returned prices in its estimates and allocation calculations.
+
+## Key features
+
+### 1. AI-assisted relief planning
+
+- Accepts a natural-language emergency brief, family count, and planning budget.
+- Uses Groq to generate structured procurement suggestions.
+- Organizes essential supplies into four categories: **Water, Hygiene, Lighting, and First Aid**.
+- Provides priorities, product search terms, and short rationales.
+
+### 2. Product discovery with Channel3
+
+- Searches for products relevant to each relief category using the Channel3 API.
+- Displays product information and available offer details returned by the product search service.
+- Uses returned prices for procurement estimates rather than treating AI-generated prices as verified offers.
+
+### 3. Smart Budget and Budget Rescue
+
+- Estimates the cost of covering all requested families using the selected product offers.
+- Calculates a recommended allocation constrained by the entered budget.
+- Prioritizes category coverage using a priority-weighted allocation approach.
+- Shows modeled complete-kit coverage, category-level coverage, recommended spend, and any unallocated budget.
+- Supports a reduced-budget rescue scenario while retaining visibility into essential categories.
+
+**Planning note:** These figures are estimates based on the selected offers and configured quantities. Product pack sizes, suitability, retailer conditions, shipping costs, and final availability must be checked before procurement. A modeled category set is not a guarantee that every family has received a complete or medically suitable kit.
+
+### 4. PayPal contribution checkout
+
+- Integrates PayPal Checkout for one-time contributions.
+- Creates donation records and PayPal orders on the server.
+- Captures approved orders on the server and checks the captured amount and currency against the contribution record.
+- Marks a donation `COMPLETED` only after a successful, matching PayPal capture.
+
+**Payment environment:** The current demonstration uses PayPal **Sandbox** accounts. Sandbox transactions are simulated and do not collect real money. Do not use this setup to accept live donations.
+
+### 5. Supabase contribution ledger
+
+- Stores contribution records in Supabase PostgreSQL.
+- Tracks payment states such as `PENDING`, `COMPLETED`, `FAILED`, and `REVIEW_REQUIRED`.
+- Stores PayPal order and capture references and capture timestamps when available.
+- Exposes the contribution ledger through the `/api/donations` endpoint.
+
+Pending contributions are not treated as received funds. Only successfully captured and verified contributions should be counted as completed donations.
+
+### 6. AG Grid data table
+
+- Displays contribution records in a sortable, filterable, searchable grid.
+- Supports reviewing contribution amounts, payment statuses, PayPal capture references, and capture timestamps.
+
+## Technology stack
+
+| Area | Technology |
+|---|---|
+| Application | Next.js App Router, React, TypeScript |
+| AI planning | Groq API (`openai/gpt-oss-20b` by default) |
+| Product discovery | Channel3 API |
+| Payments | PayPal Checkout SDK and PayPal REST API (Sandbox) |
+| Database | Supabase PostgreSQL |
+| Data grid | AG Grid |
+| Styling | Tailwind CSS |
+
+## Application flow
+
+1. The coordinator enters the emergency need, number of families, and budget.
+2. The planning API asks Groq for structured category recommendations.
+3. The server searches Channel3 for matching products and offer information.
+4. The application calculates full-coverage estimates and a budget-constrained allocation.
+5. A contributor selects a contribution tier and approves the PayPal Sandbox checkout.
+6. The server captures the approved PayPal order and verifies the capture details.
+7. Supabase is updated with the final payment status, and the contribution ledger displays the record.
 
 ## Run locally
 
-Requires Node.js 20.9 or later and a PayPal sandbox REST app ([developer.paypal.com](https://developer.paypal.com/dashboard/applications/sandbox)). The transactions and balances pages also need the app's **Transaction search** feature enabled.
+### Requirements
+
+- Node.js 20.9 or later
+- npm
+- A Groq API key
+- A Channel3 API key
+- A Supabase project
+- A PayPal Developer account with Sandbox Business and Personal test accounts
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Irin356/ReliefCart.git
+cd ReliefCart
+```
+
+### 2. Install dependencies
 
 ```bash
 npm install
-cp env.example .env.local   # then fill in the values
+```
+
+### 3. Configure environment variables
+
+Copy the example environment file:
+
+**Windows PowerShell**
+
+```powershell
+Copy-Item env.example .env.local
+```
+
+**macOS / Linux**
+
+```bash
+cp env.example .env.local
+```
+
+Open `.env.local` and fill in the values for the integrations listed in `env.example`. Do not commit this file or share its contents.
+
+The PayPal variables used by the application are:
+
+```dotenv
+NEXT_PUBLIC_PAYPAL_CLIENT_ID=YOUR_SANDBOX_APP_CLIENT_ID
+PAYPAL_CLIENT_ID=YOUR_SANDBOX_APP_CLIENT_ID
+PAYPAL_SECRET=YOUR_SANDBOX_APP_SECRET
+```
+
+Use the **same Client ID** for `NEXT_PUBLIC_PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_ID`. The `PAYPAL_SECRET` must belong to that same Sandbox REST API app. Keep the secret server-side; do not create a `NEXT_PUBLIC_PAYPAL_SECRET` variable.
+
+The application also needs the Groq, Channel3, and Supabase values defined in `env.example`. Preserve the variable names from that file. The Groq model can be configured with `GROQ_MODEL`; when omitted, the application defaults to `openai/gpt-oss-20b`.
+
+### 4. Set up the Supabase database
+
+1. Create or open your Supabase project.
+2. Open the Supabase SQL Editor.
+3. Run the SQL in [`supabase/schema.sql`](supabase/schema.sql) to create the donation table and its database policies.
+4. Configure the Supabase project values in `.env.local` using the variable names in `env.example`.
+
+Keep administrative Supabase credentials on the server. Never expose a service-role key through a `NEXT_PUBLIC_` environment variable.
+
+### 5. Run the development server
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Next.js only loads the dotted `.env.local`; it is git-ignored, so credentials stay out of the repo.
+Open [http://localhost:3000](http://localhost:3000).
 
-Other scripts: `npm run build` (production build), `npm run start` (serve the build), `npm run lint`.
+### Other useful commands
 
-### AG Studio licence (optional)
-
-Set `AG_STUDIO` in `.env.local` to your AG Studio licence key. The dashboard passes it to `AgStudioProvider`.
-
-### AI assistant (optional)
-
-The AG Studio dashboard at `/dashboard` has an AI assistant backed by OpenAI. The key is taken from the first of these that is set; with neither, the assistant is hidden:
-
-1. `AG_STUDIO_OPENAI_API_KEY`, specific to this app. Put it in `.env.local` to choose the key for this demo.
-2. `OPENAI_API_KEY`, the name OpenAI's own tools use. If you already export one (e.g. in `~/.zshrc`), the demo uses it with no setup, and spends against it.
-
-A separate name is needed because Next.js prefers variables already in the environment over `.env.local`, so a globally exported `OPENAI_API_KEY` can't be overridden per project. The server logs which variable it used (never the key) the first time the assistant is configured.
-
-`OPENAI_MODELS` lists the model ids the assistant may use, comma-separated, first one the default (`gpt-5.4-mini` when unset); with two or more, the chat offers a model picker.
-
-The key never reaches the browser. Studio's adapter ([`openai-adapter.ts`](app/dashboard/studio/openai-adapter.ts), copied from the AG Studio docs) runs client-side and posts to this app's own [`/api/ai/responses`](app/api/ai/responses/route.ts), which adds the key, only allows the configured models, caps output tokens, and streams OpenAI's reply back.
-
-In production `.env.local` isn't deployed: set the variable in your host's environment (e.g. Vercel project settings, `docker run --env-file`, or a secrets manager), as with the PayPal credentials. The route has no auth or rate limiting, so don't deploy it publicly with a real key without adding one.
-
-## How it works
-
-```
-lib/paypal.ts            Every PayPal call: OAuth token, paging, retries, response types
-lib/dashboard-data.ts    Turns those responses into the dashboard's related tables
-app/(endpoints)/         One page per endpoint, each rendering an AG Grid
-app/dashboard/           The AG Studio dashboard
-app/api/ai/responses/    Server-side proxy for the dashboard's AI assistant
+```bash
+npm run build   # Create a production build
+npm run start   # Serve the production build
+npm run lint    # Run lint checks, if configured in package.json
 ```
 
-[`lib/paypal.ts`](lib/paypal.ts) calls the REST API with plain `fetch`, no SDK. It gets an OAuth access token with the client-credentials grant and caches it until just before it expires. It follows `page`/`total_pages` paging, and retries on 401, 429 and 5xx responses. Its types are hand-written for the fields this demo reads, in the API's own snake_case.
+## PayPal Sandbox testing
 
-Every page is a server component that calls `await connection()`, so it renders per request with live data instead of being prerendered at build time. PayPal credentials never leave the server.
+1. In the PayPal Developer Dashboard, create a Sandbox REST API app associated with a Sandbox Business seller account.
+2. Configure the app's Client ID and Secret in `.env.local`.
+3. Use a separate Sandbox Personal buyer account to complete checkout.
+4. Restart the Next.js server after changing environment variables.
+5. After checkout, inspect `/api/donations` and confirm that the new record has `status: "COMPLETED"`, a non-null `paypal_capture_id`, and a non-null `captured_at`.
 
-## Endpoint pages
+Use Sandbox credentials only for this demonstration. Never put real PayPal credentials in the repository.
 
-Each page in [`app/(endpoints)`](app/(endpoints)) calls one function in `lib/paypal.ts`, maps the response to flat rows, and passes them with plain column definitions to the shared [`DataGrid`](app/(endpoints)/data-grid.tsx). The page header shows the REST calls behind it.
+## Important security notes
 
-| Page | `lib/paypal.ts` function | REST calls |
-|---|---|---|
-| [`/products`](app/(endpoints)/products/page.tsx) | `listProducts()` | `GET /v1/catalogs/products`, then `GET /v1/catalogs/products/{id}` per product |
-| [`/plans`](app/(endpoints)/plans/page.tsx) | `listPlans()` | `GET /v1/billing/plans`, then `GET /v1/billing/plans/{id}` per plan |
-| [`/invoices`](app/(endpoints)/invoices/page.tsx) | `listInvoices()` | `GET /v2/invoicing/invoices`, then `GET /v2/invoicing/invoices/{id}` per invoice |
-| [`/transactions`](app/(endpoints)/transactions/page.tsx) | `searchTransactions(start, end)` | `GET /v1/reporting/transactions` |
-| [`/balances`](app/(endpoints)/balances/page.tsx) | `getBalances()` | `GET /v1/reporting/balances` |
+- `.env.local` contains private API credentials and must remain untracked by Git.
+- Keep PayPal secrets, Supabase administrative keys, Groq keys, and Channel3 keys on the server.
+- The PayPal integration described here is configured for Sandbox testing, not live-money processing.
+- Before deploying publicly, review authentication, authorization, rate limiting, database access policies, logging, and production payment requirements.
 
-Things worth knowing about these endpoints:
+## Known limitations
 
-- **List endpoints return summaries.** Products have no type or category, plans no billing cycles, and invoices no line items, payments or refunds. So each record is fetched again in full, which is why these pages take a second or two.
-- **Billing plans keep their price in `billing_cycles`.** There is an optional `TRIAL` cycle, then the `REGULAR` cycle; `total_cycles: 0` means it bills until cancelled.
-- **Transaction Search covers at most 31 days per request** and rejects fractional seconds in dates. New activity can take up to three hours to appear. `fields=all` adds `payer_info` to each `transaction_info`. Event codes are [PayPal T-codes](https://developer.paypal.com/docs/transaction-search/transaction-event-codes/) (`T0001` = payout); status is `S` success, `P` pending, `D` denied, `V` reversed or `F` partially refunded.
-- **Amounts are decimal strings with a currency**, e.g. `{ "value": "2.99", "currency_code": "USD" }`. `amountOf()` turns them into numbers, and the grid formats money columns in each row's currency.
+- Product search results, prices, merchants, and availability can change. Review the current offer before procurement.
+- Product pack sizes and exact per-family suitability may require manual validation.
+- Budget allocations are planning estimates, not purchase orders or guarantees of delivery.
+- PayPal Sandbox transactions are simulated and are not real contributions.
 
-### The grid
+## Demo
 
-Pages are server components, so the column definitions they pass to the grid must be plain data, with no functions. Money columns use the `type: 'money'` column type, defined in `data-grid.tsx`, which formats the value in the row's `currency`. Date columns use AG Grid's built-in `cellDataType: 'dateString'` or `'dateTimeString'`. Every column can be sorted and filtered, and the search box filters across all columns.
+[ReliefCart AI — YouTube demo](https://youtu.be/JvuT7RIXpU8)
 
-## Dashboard
+## License
 
-[`/dashboard`](app/dashboard/page.tsx) fetches all five endpoints at once. [`lib/dashboard-data.ts`](lib/dashboard-data.ts) turns them into related tables: customers, invoices, invoice line items, invoice payments, products, plans, transactions, payouts and balances. AG Studio's data sources, relationships, theme, default report and AI assistant are configured in [`app/dashboard/studio`](app/dashboard/studio). Reports you create or edit are saved in the browser's localStorage.
+Add the license selected for this project as a `LICENSE` file in the repository root. Confirm that the upstream starter code permits the license you choose before publishing or relicensing the project.
