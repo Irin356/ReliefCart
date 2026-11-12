@@ -191,8 +191,8 @@ Use Sandbox credentials only for this demonstration. Never put real PayPal crede
 
 ## Demo
 
-**Live application:** [https://reliefcart.onrender.com/](https://reliefcart.onrender.com/)
-[ReliefCart AI — YouTube demo](https://youtu.be/JvuT7RIXpU8)
+- **Live application:** [https://reliefcart.onrender.com/](https://reliefcart.onrender.com/)
+- **Demo video:** [ReliefCart AI on YouTube](https://youtu.be/JvuT7RIXpU8)
 
 ## License
 
